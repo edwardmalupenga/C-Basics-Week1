@@ -1,3 +1,7 @@
+# C-Basics-Week
+
+My first assignment.
+
 ## Online Banking GUI
 
 This project is a Tkinter-based desktop application that simulates a simple online banking system. It supports account registration, login, deposits, withdrawals, transfers, and password changes.
@@ -34,4 +38,3 @@ This project is a Tkinter-based desktop application that simulates a simple onli
 ### Troubleshooting
 - If the GUI fails to launch, confirm that Tkinter is installed with your Python distribution.
 - To reset the application, delete the `bank_data.txt` file in the data directory. A fresh file will be created automatically when the app starts.
-
