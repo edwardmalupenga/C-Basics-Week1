@@ -1,8 +1,6 @@
 # Online Banking System GUI
 
-A Tkinter-based desktop application that simulates a simple online banking system.
-
-This project is a Tkinter-based desktop application that simulates a simple online banking system. It supports account registration, login, deposits, withdrawals, transfers, and password changes.
+A Tkinter-based desktop application that simulates a simple online banking system. It supports account registration, login, deposits, withdrawals, transfers, and password changes.
 
 ### Requirements
 - Python 3.9 or later (Tkinter is bundled with standard Python installers on Windows, macOS, and most Linux distributions)
