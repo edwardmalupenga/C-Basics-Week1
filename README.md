@@ -1,8 +1,6 @@
-# C-Basics-Week
+# Online Banking System GUI
 
-My first assignment.
-
-## Online Banking GUI
+A Tkinter-based desktop application that simulates a simple online banking system.
 
 This project is a Tkinter-based desktop application that simulates a simple online banking system. It supports account registration, login, deposits, withdrawals, transfers, and password changes.
 
