@@ -29,11 +29,7 @@ class Account:
 class OnlineBankingApp:
     def __init__(self, master: tk.Tk) -> None:
         self.master = master
-<<<<<<< HEAD
-        self.master.title("Online Baking System - Student Number: 2025557938")
-=======
         self.master.title("Online Banking System")
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
         self.master.geometry("1080x720")
         self.master.state("zoomed")
         self.master.resizable(True, True)
@@ -117,11 +113,7 @@ class OnlineBankingApp:
     def _build_welcome_frame(self) -> None:
         frame = self.frames["welcome"]
 
-<<<<<<< HEAD
-        ttk.Label(frame, text="Online Baking System\nStudent Number: 2025557938", style="Header.TLabel").pack(pady=(0, 20))
-=======
         ttk.Label(frame, text="Online Banking System", style="Header.TLabel").pack(pady=(0, 20))
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
         ttk.Label(
             frame,
             text="Securely manage your finances with confidence.",

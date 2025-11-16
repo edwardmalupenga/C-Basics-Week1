@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-/*
- * Online Baking System
- * Student Number: 2025557938
- */
-
-=======
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -357,12 +349,7 @@ void changePassword() {
 
 void displayPreLoginMenu() {
     printf("\n\n==================================\n");
-<<<<<<< HEAD
-    printf("   ONLINE BAKING SYSTEM \n");
-    printf("   Student Number: 2025557938 \n");
-=======
     printf("   ONLINE BANKING SYSTEM \n");
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
     printf("==================================\n");
     printf("1. Register New Account\n");
     printf("2. Login to Account\n");
