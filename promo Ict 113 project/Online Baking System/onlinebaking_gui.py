@@ -4,6 +4,7 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Optional
 from pathlib import Path
+from datetime import datetime
 
 
 MAX_ACCOUNTS = 100
@@ -15,6 +16,7 @@ DATA_DIR_ENV = os.environ.get("ONLINE_BANKING_DATA_DIR")
 DATA_DIR = Path(DATA_DIR_ENV).expanduser() if DATA_DIR_ENV else DEFAULT_DATA_DIR
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 FILENAME = DATA_DIR / "bank_data.txt"
+TRANSACTION_FILENAME = DATA_DIR / "transactions.txt"
 
 
 @dataclass
@@ -26,14 +28,20 @@ class Account:
     phone_number: str
 
 
+@dataclass
+class Transaction:
+    account_number: int
+    transaction_type: str  # "Deposit", "Withdrawal", "Transfer"
+    amount: float
+    balance_after: float
+    timestamp: str
+    recipient_account: Optional[int] = None  # For transfers
+
+
 class OnlineBankingApp:
     def __init__(self, master: tk.Tk) -> None:
         self.master = master
-<<<<<<< HEAD
         self.master.title("Online Baking System - Student Number: 2025557938")
-=======
-        self.master.title("Online Banking System")
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
         self.master.geometry("1080x720")
         self.master.state("zoomed")
         self.master.resizable(True, True)
@@ -41,8 +49,10 @@ class OnlineBankingApp:
 
         self.accounts: List[Account] = []
         self.logged_in_account: Optional[Account] = None
+        self.transactions: List[Transaction] = []
 
         self._load_accounts()
+        self._load_transactions()
         self._build_widgets()
         self._show_frame("welcome")
 
@@ -86,6 +96,41 @@ class OnlineBankingApp:
                 return account
         return None
 
+    def _load_transactions(self) -> None:
+        if not TRANSACTION_FILENAME.exists():
+            self.transactions = []
+            return
+
+        loaded_transactions: List[Transaction] = []
+        with TRANSACTION_FILENAME.open("r", encoding="utf-8") as file:
+            for line in file:
+                parts = line.strip().split("|")
+                if len(parts) >= 5:
+                    try:
+                        recipient = int(parts[5]) if len(parts) > 5 and parts[5].strip() else None
+                        transaction = Transaction(
+                            account_number=int(parts[0]),
+                            transaction_type=parts[1],
+                            amount=float(parts[2]),
+                            balance_after=float(parts[3]),
+                            timestamp=parts[4],
+                            recipient_account=recipient
+                        )
+                        loaded_transactions.append(transaction)
+                    except (ValueError, IndexError):
+                        continue
+        self.transactions = loaded_transactions
+
+    def _save_transaction(self, transaction: Transaction) -> None:
+        self.transactions.append(transaction)
+        with TRANSACTION_FILENAME.open("a", encoding="utf-8") as file:
+            recipient = str(transaction.recipient_account) if transaction.recipient_account else ""
+            file.write(
+                f"{transaction.account_number}|{transaction.transaction_type}|"
+                f"{transaction.amount}|{transaction.balance_after}|"
+                f"{transaction.timestamp}|{recipient}\n"
+            )
+
     # ---------------- UI Construction ---------------- #
     def _build_widgets(self) -> None:
         style = ttk.Style()
@@ -117,11 +162,7 @@ class OnlineBankingApp:
     def _build_welcome_frame(self) -> None:
         frame = self.frames["welcome"]
 
-<<<<<<< HEAD
         ttk.Label(frame, text="Online Baking System\nStudent Number: 2025557938", style="Header.TLabel").pack(pady=(0, 20))
-=======
-        ttk.Label(frame, text="Online Banking System", style="Header.TLabel").pack(pady=(0, 20))
->>>>>>> c09813130ae8d6662140501039bda7e5f3b30edb
         ttk.Label(
             frame,
             text="Securely manage your finances with confidence.",
@@ -190,6 +231,9 @@ class OnlineBankingApp:
             fill="x", pady=4
         )
         ttk.Button(btn_frame, text="Change Password", command=self._open_change_password_dialog).pack(
+            fill="x", pady=4
+        )
+        ttk.Button(btn_frame, text="Transaction History", command=self._show_transaction_history).pack(
             fill="x", pady=4
         )
         ttk.Button(btn_frame, text="Show Account Details", command=self._show_account_details).pack(
@@ -282,6 +326,16 @@ class OnlineBankingApp:
         )
         self.accounts.append(new_account)
         self._save_accounts()
+
+        # Record initial deposit as a transaction
+        transaction = Transaction(
+            account_number=account_num_int,
+            transaction_type="Initial Deposit",
+            amount=deposit_amount,
+            balance_after=deposit_amount,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        self._save_transaction(transaction)
 
         messagebox.showinfo(
             "Success",
@@ -427,6 +481,17 @@ class OnlineBankingApp:
 
         self.logged_in_account.balance += amount
         self._save_accounts()
+        
+        # Record transaction
+        transaction = Transaction(
+            account_number=self.logged_in_account.account_number,
+            transaction_type="Deposit",
+            amount=amount,
+            balance_after=self.logged_in_account.balance,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        self._save_transaction(transaction)
+        
         messagebox.showinfo("Deposit", f"ZMW {amount:,.2f} added to your account.")
         dialog.destroy()
         self._show_frame("dashboard")
@@ -453,6 +518,17 @@ class OnlineBankingApp:
 
         self.logged_in_account.balance -= amount
         self._save_accounts()
+        
+        # Record transaction
+        transaction = Transaction(
+            account_number=self.logged_in_account.account_number,
+            transaction_type="Withdrawal",
+            amount=amount,
+            balance_after=self.logged_in_account.balance,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
+        self._save_transaction(transaction)
+        
         messagebox.showinfo("Withdrawal", f"ZMW {amount:,.2f} withdrawn successfully.")
         dialog.destroy()
         self._show_frame("dashboard")
@@ -493,6 +569,29 @@ class OnlineBankingApp:
         self.logged_in_account.balance -= amount
         recipient_account.balance += amount
         self._save_accounts()
+        
+        # Record transaction for sender
+        sender_transaction = Transaction(
+            account_number=self.logged_in_account.account_number,
+            transaction_type="Transfer",
+            amount=amount,
+            balance_after=self.logged_in_account.balance,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            recipient_account=recipient_account.account_number
+        )
+        self._save_transaction(sender_transaction)
+        
+        # Record transaction for recipient
+        recipient_transaction = Transaction(
+            account_number=recipient_account.account_number,
+            transaction_type="Transfer Received",
+            amount=amount,
+            balance_after=recipient_account.balance,
+            timestamp=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            recipient_account=self.logged_in_account.account_number
+        )
+        self._save_transaction(recipient_transaction)
+        
         messagebox.showinfo(
             "Transfer",
             f"ZMW {amount:,.2f} transferred to {recipient_account.full_name} "
@@ -543,6 +642,115 @@ class OnlineBankingApp:
             f"Current Balance: ZMW {account.balance:,.2f}\n"
             f"Security: Password hash is hidden from view.",
         )
+
+    def _show_transaction_history(self) -> None:
+        if not self._require_login():
+            return
+
+        # Filter transactions for the logged-in account
+        account_transactions = [
+            t for t in self.transactions
+            if t.account_number == self.logged_in_account.account_number
+        ]
+
+        if not account_transactions:
+            messagebox.showinfo("Transaction History", "No transactions found for this account.")
+            return
+
+        # Create a new window to display transaction history
+        history_window = tk.Toplevel(self.master)
+        history_window.title("Transaction History")
+        history_window.geometry("800x500")
+        history_window.configure(bg="#0e1a2b")
+
+        # Create a frame with scrollbar
+        main_frame = ttk.Frame(history_window)
+        main_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        # Header
+        header_label = ttk.Label(
+            main_frame,
+            text=f"Transaction History - Account: {self.logged_in_account.account_number}",
+            font=("Segoe UI Semibold", 14)
+        )
+        header_label.pack(pady=(0, 10))
+
+        # Create a canvas with scrollbar
+        canvas = tk.Canvas(main_frame, bg="#13263c", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Display transactions (most recent first)
+        account_transactions.sort(key=lambda x: x.timestamp, reverse=True)
+
+        for transaction in account_transactions:
+            transaction_frame = ttk.Frame(scrollable_frame, style="Card.TFrame")
+            transaction_frame.pack(fill="x", pady=5, padx=5)
+
+            # Transaction type and amount
+            type_color = "#4CAF50" if transaction.transaction_type in ["Deposit", "Transfer Received", "Initial Deposit"] else "#F44336"
+            type_label = ttk.Label(
+                transaction_frame,
+                text=f"{transaction.transaction_type}",
+                font=("Segoe UI", 11, "bold"),
+                foreground=type_color
+            )
+            type_label.pack(anchor="w", padx=10, pady=(5, 0))
+
+            # Amount
+            amount_label = ttk.Label(
+                transaction_frame,
+                text=f"Amount: ZMW {transaction.amount:,.2f}",
+                font=("Segoe UI", 10)
+            )
+            amount_label.pack(anchor="w", padx=10)
+
+            # Balance after
+            balance_label = ttk.Label(
+                transaction_frame,
+                text=f"Balance After: ZMW {transaction.balance_after:,.2f}",
+                font=("Segoe UI", 10)
+            )
+            balance_label.pack(anchor="w", padx=10)
+
+            # Recipient (for transfers)
+            if transaction.recipient_account:
+                recipient_text = "To" if transaction.transaction_type == "Transfer" else "From"
+                recipient_label = ttk.Label(
+                    transaction_frame,
+                    text=f"{recipient_text} Account: {transaction.recipient_account}",
+                    font=("Segoe UI", 9),
+                    foreground="#888888"
+                )
+                recipient_label.pack(anchor="w", padx=10)
+
+            # Timestamp
+            timestamp_label = ttk.Label(
+                transaction_frame,
+                text=f"Date: {transaction.timestamp}",
+                font=("Segoe UI", 9),
+                foreground="#888888"
+            )
+            timestamp_label.pack(anchor="w", padx=10, pady=(0, 5))
+
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # Close button
+        close_button = ttk.Button(
+            history_window,
+            text="Close",
+            command=history_window.destroy
+        )
+        close_button.pack(pady=10)
 
     def _logout(self) -> None:
         if self.logged_in_account:
